@@ -4,10 +4,10 @@ Userscript (tiny browser extension) that stores the timestamps of Twitch VODs an
 
 ## Why?
 
-If one is watching a long video on demand (VOD) in Twitch and does not finish in
-a single sitting, or if it's a long series it is a pain to hunt for the previously
+If one is watching a long video on demand (VOD) on Twitch and does not finish in
+a single sitting, or if it's a long series, it is a pain to hunt for the previously
 watched point. This script makes it easy by automatically storing the timestamps
-of the watched VODs and allowing the user to continue from the last point with
+of all watched VODs and allowing the user to continue from the last point with
 a single click.
 
 ## How does it work
@@ -19,12 +19,12 @@ Under https://www.twitch.tv/* the script adds a context menu option to open a di
 with an ordered list with VOD info and links to the last stored point.
 
 The stored timestamps are cleared after 30 days of not watching or can be explicitly
-removed.
+removed from the list.
 
 ## How to install
 
 The script is written and tested with ViolentMonkey, but should work with other
 GreaseMonkey derivatives.
 
-Install by clicking "Install from URL" in VM dash or by copying and pasting the
+Install by clicking "Install from URL" in VM dash and pointing to the raw JS file, or by copying and pasting the
 code into a new file under VM.
