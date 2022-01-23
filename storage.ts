@@ -5,8 +5,8 @@ type StorageFunctions = {
   setValue: typeof GM_setValue;
 };
 
-export type StorageApi = ReturnType<typeof createStorage>;
-export const createStorage = <TKey extends string = string>({
+export type StorageApi = ReturnType<typeof getStorage>;
+export const getStorage = <TKey extends string = string>({
   constants,
   logger,
   getValue,

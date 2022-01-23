@@ -6,7 +6,6 @@ import {
   getTimeouts,
   getTwitchUrlTool,
   TempCache,
-  TimeoutId,
   Timeouts,
   UrlTool,
 } from "./misc";

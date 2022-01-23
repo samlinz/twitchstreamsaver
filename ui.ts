@@ -120,23 +120,23 @@ export const createUi = ({
       const tr = document.createElement("tr");
 
       let td = document.createElement("td");
-      td.textContent = streamerName;
+      td.textContent = streamerName || "-";
       Object.assign(td.style, {
         overflow: "hidden",
         whiteSpace: "nowrap",
         textOverflow: "ellipsis",
       });
-      td.title = streamerName;
+      td.title = streamerName || "-";
       tr.appendChild(td);
 
       td = document.createElement("td");
-      td.textContent = streamName;
+      td.textContent = streamName || "-";
       Object.assign(td.style, {
         overflow: "hidden",
         whiteSpace: "nowrap",
         textOverflow: "ellipsis",
       });
-      td.title = streamName;
+      td.title = streamName || "-";
       tr.appendChild(td);
 
       td = document.createElement("td");
@@ -145,26 +145,26 @@ export const createUi = ({
       tr.appendChild(td);
 
       td = document.createElement("td");
-      td.textContent = humanTime;
+      td.textContent = humanTime || "-";
       Object.assign(td.style, {
         overflow: "hidden",
         whiteSpace: "nowrap",
         textOverflow: "ellipsis",
       });
-      td.title = humanTime;
+      td.title = humanTime || "-";
       tr.appendChild(td);
 
       // Create the link that takes user to the last watched point.
       td = document.createElement("td");
       const link = document.createElement("a");
-      link.href = url;
-      link.textContent = url;
+      link.href = url || "-";
+      link.textContent = url || "-";
       Object.assign(td.style, {
         overflow: "hidden",
         whiteSpace: "nowrap",
         textOverflow: "ellipsis",
       });
-      td.title = url;
+      td.title = url || "-";
       td.appendChild(link);
       tr.appendChild(td);
 

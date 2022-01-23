@@ -1,3 +1,4 @@
+"use strict";
 // ==UserScript==
 // @name        Twitch Stream Saver
 // @namespace   samlinz
@@ -10,9 +11,8 @@
 // @author      samlinz
 // @description 9/21/2020, 1:20:46 PM
 // ==/UserScript==
-
-import { main } from "./main";
-
+Object.defineProperty(exports, "__esModule", { value: true });
+const main_1 = require("./main");
 /*
 
   This userscript is active on Twitch.tv's web portal.
@@ -29,7 +29,6 @@ import { main } from "./main";
   This is used and tested with ViolentMonkey.
 
 */
-
 window.addEventListener("load", () => {
-  main();
+    (0, main_1.main)();
 });
