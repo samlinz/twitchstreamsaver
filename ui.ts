@@ -211,6 +211,7 @@ export const createUi = ({
       return [dtEl, ddEl];
     }
 
+    const { value: lastStored } = storage.get("LAST_STORED") || {};
     const videoId = parser.getVideoId(location);
     const time = parser.getTime(document);
     const debugProperties = {
@@ -221,7 +222,7 @@ export const createUi = ({
       URL: time
         ? urlTool.getTimedUrl(videoId, time[0], time[1], time[2])
         : null,
-      //   LAST_STORED: lastStored,
+      LAST_STORED: lastStored,
     };
 
     const children = Object.entries(debugProperties)

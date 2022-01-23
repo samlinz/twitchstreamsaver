@@ -17,6 +17,7 @@ export const getTwitchUrlTool = () => {
 };
 
 // Super simple cache for quasi-stable values.
+export type TempCache = typeof getCache;
 export const getCache = <T>(fnGetValue: () => T) => {
   const EXPIRATION_TIME_MS = 5 * 60 * 1000;
   let value: T;
@@ -67,6 +68,9 @@ export const getTimeouts = ({ constants }: Services) => {
   const set = (fn: any, ms: number): TimeoutId => {
     return window.setTimeout(fn, ms);
   };
+  const setInterval = (fn: any, ms: number): TimeoutId => {
+    return window.setInterval(fn, ms);
+  };
 
   const remove = (id: TimeoutId) => {
     return clearTimeout(id);
@@ -74,6 +78,11 @@ export const getTimeouts = ({ constants }: Services) => {
 
   return {
     set,
+    setInterval,
     remove,
   };
+};
+
+export const getDocumentGetter = () => () => {
+  return window.document;
 };
