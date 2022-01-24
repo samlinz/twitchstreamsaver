@@ -3,7 +3,7 @@ const path = require("path");
 
 const USERSCRIPT_CONFIG = `
 // ==UserScript==
-// @name        Twitch Stream Saver 2
+// @name        Video Saver
 // @namespace   samlinz
 // @match       https://www.twitch.tv/*
 // @grant       GM_getValue
@@ -50,7 +50,6 @@ const oldVersion = (() => {
   return oldVersion;
 })();
 
-/* eslint-disable */
 require("esbuild")
   .build({
     entryPoints: ["./src/index.ts"],
