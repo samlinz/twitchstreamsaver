@@ -1,13 +1,13 @@
 
 // ==UserScript==
-// @name        Twitch Stream Saver
+// @name        Twitch Stream Saver 2
 // @namespace   samlinz
 // @match       https://www.twitch.tv/*
 // @grant       GM_getValue
 // @grant       GM_setValue
 // @grant       GM_registerMenuCommand
 // @icon https://static.twitchcdn.net/assets/favicon-32-d6025c14e900565d6177.png
-// @version     1.0
+// @version     3
 // @author      samlinz
 // @description 9/21/2020, 1:20:46 PM
 // ==/UserScript==
