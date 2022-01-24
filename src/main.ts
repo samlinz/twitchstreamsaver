@@ -11,6 +11,7 @@ import {
 } from "./misc";
 import { getTwitchParser, VideoPageParser } from "./parse";
 import { getStorage, StorageApi } from "./storage";
+import { getUserInterface, initUserinterface } from "./ui";
 
 const getInterval = ({
   logger,
@@ -31,6 +32,7 @@ const getInterval = ({
   timeouts: Timeouts;
 }) => {
   const { INTERVAL_UPDATE_TIME } = constants;
+  let i = 1;
 
   function runInterval({
     fnGetTime,
@@ -47,43 +49,49 @@ const getInterval = ({
     fnGetTimedVodUrl: UrlTool["getTimedUrl"];
     id: string;
   }) {
-    const streamName = fnGetStreamName();
-    const streamerName = fnGetStreamerName();
+    try {
+      logger?.log(`Running ${i++}`);
 
-    if (!streamName || !streamerName) {
-      return logger?.warn("Could not fetch VOD information");
+      const streamName = fnGetStreamName();
+      const streamerName = fnGetStreamerName();
+
+      if (!streamName || !streamerName) {
+        return logger?.warn("Could not fetch VOD information");
+      }
+
+      const time = fnGetTime();
+
+      if (!time) {
+        return logger?.warn("Could not fetch time information");
+      }
+
+      // Don't immediately store anything.
+      const [hours, minutes, seconds] = time;
+      if (hours === 0 && minutes < 1) {
+        return logger?.log("Not storing anything yet");
+      }
+
+      const timestamp = Date.now();
+      fnSetStored(id, {
+        timestamp: timestamp,
+        humanTime: new Date(timestamp).toISOString(),
+        value: time,
+        videoName: streamName,
+        channelName: streamerName,
+        url: fnGetTimedVodUrl(id, hours, minutes, seconds),
+      });
+
+      const storedTimeStr = time.join(":");
+      logger?.log(`Saved ${storedTimeStr} for ${id}`);
+
+      // For debugging.
+      storage.set("LAST_STORED", {
+        timestamp: Date.now(),
+        value: storedTimeStr,
+      });
+    } catch (e) {
+      logger?.error("Error running interval", e);
     }
-
-    const time = fnGetTime();
-
-    if (!time) {
-      return logger?.warn("Could not fetch time information");
-    }
-
-    // Don't immediately store anything.
-    const [hours, minutes, seconds] = time;
-    if (hours === 0 && minutes < 1) {
-      return logger?.log("Not storing anything yet");
-    }
-
-    const timestamp = Date.now();
-    fnSetStored(id, {
-      timestamp: timestamp,
-      humanTime: new Date(timestamp).toISOString(),
-      value: time,
-      videoName: streamName,
-      channelName: streamerName,
-      url: fnGetTimedVodUrl(id, hours, minutes, seconds),
-    });
-
-    const storedTimeStr = time.join(":");
-    logger?.log(`Saved ${storedTimeStr} for ${id}`);
-
-    // For debugging.
-    storage.set("LAST_STORED", {
-      timestamp: Date.now(),
-      value: storedTimeStr,
-    });
   }
 
   function startInterval() {
@@ -119,7 +127,10 @@ const getInterval = ({
       id: id,
     });
 
-    const intervalId = timeouts.set(fnRunInterval, INTERVAL_UPDATE_TIME);
+    const intervalId = timeouts.setInterval(
+      fnRunInterval,
+      INTERVAL_UPDATE_TIME
+    );
 
     logger?.log(`Starting interval ${intervalId}`);
 
@@ -165,6 +176,14 @@ export function main() {
     urlTool,
     timeouts,
   });
+  const ui = getUserInterface({
+    constants,
+    parser,
+    storage,
+    timeouts,
+    urlTool,
+    logger,
+  });
 
   logger?.log("Initializing");
 
@@ -191,4 +210,12 @@ export function main() {
   checkURL();
   // Check the URL again at intervals because Twitch is SPA and the script doesn't load again when navigating.
   timeouts.setInterval(checkURL, constants.INTERVAL_MATCH_URL);
+
+  initUserinterface({
+    constants,
+    logger,
+    storage,
+    registerMenu: GM_registerMenuCommand,
+    ui,
+  });
 }

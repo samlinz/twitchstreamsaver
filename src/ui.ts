@@ -3,8 +3,8 @@ import { TimeoutId, Timeouts, UrlTool } from "./misc";
 import { VideoPageParser } from "./parse";
 import { StorageApi } from "./storage";
 
-export type UserInterface = ReturnType<typeof createUi>;
-export const createUi = ({
+export type UserInterface = ReturnType<typeof getUserInterface>;
+export const getUserInterface = ({
   constants,
   storage,
   logger,
@@ -262,7 +262,7 @@ export const createUi = ({
   };
 };
 
-export const init = ({
+export const initUserinterface = ({
   logger,
   registerMenu,
   ui,
@@ -304,4 +304,6 @@ export const init = ({
     // deleteStorage();
     logger?.log(`Removed all entries`);
   });
+
+  logger?.log("Registered UI");
 };
