@@ -203,7 +203,8 @@ export const getUserInterface = ({
 
     const wrapperEl = document.createElement("div");
     wrapperEl.id = DIALOG_DOM_ID;
-    wrapperEl.style.cssText = "background: black; z-index: 1000;";
+    wrapperEl.style.cssText =
+      "background: black; color: white; z-index: 9999; position: absolute; top: 0; left: 0;";
     const dlEl = document.createElement("dl");
 
     function createDefinition(key: string, value: any) {
@@ -227,9 +228,7 @@ export const getUserInterface = ({
       STREAMER: parser.getChannel(document),
       TIME: time,
       STREAM_NAME: parser.getVideoName(document),
-      URL: time
-        ? urlTool.getTimedUrl(videoId, time[0], time[1], time[2])
-        : null,
+      URL: time && videoId ? urlTool.getTimedUrl(videoId, time) : null,
       LAST_STORED: lastStored,
     };
 
@@ -275,21 +274,26 @@ export const initUserinterface = ({
   registerMenu,
   ui,
   storage,
+  onStoreValue,
 }: Services & {
   registerMenu: typeof GM_registerMenuCommand;
   ui: UserInterface;
   storage: StorageApi;
+  onStoreValue?: () => void;
 }) => {
+  if (onStoreValue) {
+    registerMenu("Store timestamp", onStoreValue);
+  }
+
   // Register menu command that opens the dialog.
   registerMenu("Dialog", () => {
-    // timeouts.remove(timeoutDebugDialog);
+    ui.clearDebugTimeout();
     ui.removeDialogIfPresent();
     ui.createDialog();
   });
 
   // Register menu command that opens the dialog.
   registerMenu("Debug", () => {
-    // clearTimeout(timeoutDebugDialog);
     ui.clearDebugTimeout();
     if (ui.removeDialogIfPresent()) {
       logger?.log("Closing debug dialog");
@@ -309,8 +313,22 @@ export const initUserinterface = ({
 
   registerMenu("Nuke DB", () => {
     storage.clear();
-    // deleteStorage();
     logger?.log(`Removed all entries`);
+  });
+
+  registerMenu("Export DB", () => {
+    const s = storage.export();
+    logger?.log({
+      export: s,
+    });
+  });
+
+  registerMenu("Import DB", () => {
+    const s = window.prompt("Add db dump");
+    if (!s) return;
+    const parsed = JSON.parse(s);
+    storage.import(parsed);
+    logger?.log("Imported DB");
   });
 
   logger?.log("Registered UI");

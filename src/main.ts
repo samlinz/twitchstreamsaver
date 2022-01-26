@@ -5,11 +5,12 @@ import {
   getLogger,
   getTimeouts,
   getTwitchUrlTool,
+  getYoutubeUrlTool,
   TempCache,
   Timeouts,
   UrlTool,
 } from "./misc";
-import { getTwitchParser, VideoPageParser } from "./parse";
+import { getTwitchParser, getYoutubeParser, VideoPageParser } from "./parse";
 import { getStorage, StorageApi } from "./storage";
 import { getUserInterface, initUserinterface } from "./ui";
 
@@ -40,6 +41,7 @@ const getInterval = ({
     fnGetStreamerName,
     fnSetStored,
     fnGetTimedVodUrl,
+    options,
     id,
   }: {
     fnGetTime: () => number[] | null;
@@ -47,6 +49,9 @@ const getInterval = ({
     fnGetStreamerName: () => string | null;
     fnSetStored: StorageApi["set"];
     fnGetTimedVodUrl: UrlTool["getTimedUrl"];
+    options: {
+      skipStartOfVideo: boolean;
+    };
     id: string;
   }) {
     try {
@@ -67,22 +72,37 @@ const getInterval = ({
 
       // Don't immediately store anything.
       const [hours, minutes, seconds] = time;
-      if (hours === 0 && minutes < 1) {
+      if (options.skipStartOfVideo && hours === 0 && minutes < 1) {
         return logger?.log("Not storing anything yet");
       }
 
       const timestamp = Date.now();
+      const vodUrl = fnGetTimedVodUrl(id, [hours, minutes, seconds]);
       fnSetStored(id, {
         timestamp: timestamp,
         humanTime: new Date(timestamp).toISOString(),
         value: time,
         videoName: streamName,
         channelName: streamerName,
-        url: fnGetTimedVodUrl(id, hours, minutes, seconds),
+        url: vodUrl,
       });
 
       const storedTimeStr = time.join(":");
       logger?.log(`Saved ${storedTimeStr} for ${id}`);
+
+      if (constants.DEBUG) {
+        logger?.log({
+          streamName,
+          streamerName,
+          time,
+          hours,
+          minutes,
+          seconds,
+          timestamp,
+          vodUrl,
+          storedTimeStr,
+        });
+      }
 
       // For debugging.
       storage.set("LAST_STORED", {
@@ -94,12 +114,13 @@ const getInterval = ({
     }
   }
 
-  function startInterval() {
-    logger?.log("Starting update interval");
-
+  const getRunInterval = ({
+    skipStartOfVideo = false,
+  }: { skipStartOfVideo?: boolean } = {}) => {
     // Start recording updated information.
     const id = parser.getVideoId(location);
-    if (!id || isNaN(Number(id))) {
+    // if (!id || isNaN(Number(id))) {
+    if (!id) {
       return logger?.error("Could not get video ID");
     }
 
@@ -125,8 +146,19 @@ const getInterval = ({
       fnGetTime: fnGetTime,
       fnGetTimedVodUrl: urlTool.getTimedUrl,
       id: id,
+      options: {
+        skipStartOfVideo,
+      },
     });
 
+    return fnRunInterval;
+  };
+
+  function startInterval() {
+    logger?.log("Starting update interval");
+    const fnRunInterval = getRunInterval({
+      skipStartOfVideo: true,
+    });
     const intervalId = timeouts.setInterval(
       fnRunInterval,
       INTERVAL_UPDATE_TIME
@@ -144,10 +176,15 @@ const getInterval = ({
 
   return {
     start: startInterval,
+    getRunInterval,
   };
 };
 
-export function main() {
+type ProcessVariant = {
+  init: () => void;
+};
+type ProcessVariantBuilder = () => ProcessVariant;
+const buildTwitchVariant: ProcessVariantBuilder = () => {
   let currentInterval: ReturnType<
     ReturnType<typeof getInterval>["start"]
   > | null;
@@ -165,6 +202,7 @@ export function main() {
     ...services,
     getValue: GM_getValue,
     setValue: GM_setValue,
+    variant: "twitch",
   });
   const timeouts = getTimeouts(services);
   const process = getInterval({
@@ -205,17 +243,118 @@ export function main() {
     }
   }
 
-  // Purge too old stored values.
-  storage.purge();
-  checkURL();
-  // Check the URL again at intervals because Twitch is SPA and the script doesn't load again when navigating.
-  timeouts.setInterval(checkURL, constants.INTERVAL_MATCH_URL);
+  return {
+    init() {
+      // Purge too old stored values.
+      storage.purge();
+      checkURL();
+      // Check the URL again at intervals because Twitch is SPA and the script doesn't load again when navigating.
+      timeouts.setInterval(checkURL, constants.INTERVAL_MATCH_URL);
 
-  initUserinterface({
+      initUserinterface({
+        constants,
+        logger,
+        storage,
+        registerMenu: GM_registerMenuCommand,
+        ui,
+      });
+    },
+  };
+};
+
+const buildYoutubeVariant: ProcessVariantBuilder = () => {
+  // let currentInterval: ReturnType<
+  //   ReturnType<typeof getInterval>["start"]
+  // > | null;
+  const constants = getConstants();
+  const logger = getLogger({ constants });
+  const services: Services = {
     constants,
     logger,
-    storage,
-    registerMenu: GM_registerMenuCommand,
-    ui,
+  };
+  const cache = getCache;
+  const document = window.document;
+  const parser = getYoutubeParser(services);
+  const urlTool = getYoutubeUrlTool();
+  const storage = getStorage({
+    ...services,
+    getValue: GM_getValue,
+    setValue: GM_setValue,
+    variant: "youtube",
   });
+  const timeouts = getTimeouts(services);
+  const process = getInterval({
+    ...services,
+    cache,
+    document,
+    parser,
+    storage,
+    urlTool,
+    timeouts,
+  });
+  const ui = getUserInterface({
+    constants,
+    parser,
+    storage,
+    timeouts,
+    urlTool,
+    logger,
+  });
+
+  logger?.log("Initializing");
+
+  // function checkURL() {
+  //   logger?.log("Matching URL");
+  //   const currentPathName = location.pathname;
+  //   if (currentPathName.startsWith("/watch")) {
+  //     if (!currentInterval) {
+  //       logger?.log(
+  //         `Current pathname '${currentPathName}' matches Youtube video page, starting tracking`
+  //       );
+  //       currentInterval = process.start();
+  //     }
+  //   } else if (currentInterval) {
+  //     // Remove running interval.
+  //     currentInterval.cancel();
+  //     currentInterval = null;
+  //   }
+  // }
+
+  return {
+    init() {
+      // Purge too old stored values.
+      storage.purge();
+      // checkURL();
+      // Check the URL again at intervals because Twitch is SPA and the script doesn't load again when navigating.
+      // timeouts.setInterval(checkURL, constants.INTERVAL_MATCH_URL);
+
+      initUserinterface({
+        constants,
+        logger,
+        storage,
+        registerMenu: GM_registerMenuCommand,
+        ui,
+        onStoreValue: () => {
+          logger.log("Running interval manually");
+          const fn = process.getRunInterval({
+            skipStartOfVideo: false,
+          });
+          fn?.();
+        },
+      });
+    },
+  };
+};
+
+export function main() {
+  const host = location.host;
+
+  // Find out which video service we are actually using.
+  if (host.includes("twitch")) {
+    buildTwitchVariant().init();
+  } else if (host.includes("youtube")) {
+    buildYoutubeVariant().init();
+  } else {
+    throw Error(`${host} didn't match any known portal`);
+  }
 }

@@ -11,10 +11,12 @@ export const getStorage = <TKey extends string = string>({
   logger,
   getValue,
   setValue,
-}: Services & StorageFunctions) => {
+  variant,
+}: Services & StorageFunctions & { variant: string }) => {
   type Storage = Record<TKey, StorageEntry>;
 
-  const { STORAGE_KEY, MAX_AGE_DAYS } = constants;
+  const { STORAGE_KEY: _STORAGE_KEY, MAX_AGE_DAYS } = constants;
+  const STORAGE_KEY = `${_STORAGE_KEY}_${variant}`;
   const defaultStorage = {} as Storage;
 
   // Get entire storage object.
@@ -64,6 +66,16 @@ export const getStorage = <TKey extends string = string>({
     }
   };
 
+  const exportDb = () => {
+    const store = getValue(STORAGE_KEY, defaultStorage) as Storage;
+    return store;
+  };
+
+  const importDb = (storage: Storage) => {
+    if (!storage) throw Error("Null storage");
+    setValue(STORAGE_KEY, storage);
+  };
+
   return {
     set,
     get,
@@ -71,5 +83,7 @@ export const getStorage = <TKey extends string = string>({
     delete: deleteValue,
     clear,
     purge,
+    import: importDb,
+    export: exportDb,
   };
 };

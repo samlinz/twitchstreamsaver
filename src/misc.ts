@@ -1,14 +1,20 @@
 import { Logger, Services } from "./common";
-import { getTwitchParser } from "./parse";
 
 export type UrlTool = ReturnType<typeof getTwitchUrlTool>;
+export const getYoutubeUrlTool = () => {
+  const getTimedVodUrl = (id: string, time: number[]) => {
+    const [hours, minutes, seconds] = time;
+    const secondsTotal = (hours || 0) * 3600 + (minutes || 0) * 60 + seconds;
+    return `https://youtu.be/${id}?t=${secondsTotal}`;
+  };
+  return {
+    getTimedUrl: getTimedVodUrl,
+  };
+};
+
 export const getTwitchUrlTool = () => {
-  const getTimedVodUrl = (
-    id: string,
-    hours: number,
-    minutes: number,
-    seconds: number
-  ) => {
+  const getTimedVodUrl = (id: string, time: number[]) => {
+    const [hours, minutes, seconds] = time;
     return `https://www.twitch.tv/videos/${id}?t=${hours}h${minutes}m${seconds}s`;
   };
   return {

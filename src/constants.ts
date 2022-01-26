@@ -25,5 +25,6 @@ export const getConstants = () => {
     LOGGING,
     LOG_PREFIX,
     MAX_AGE_DAYS,
+    DEBUG: false,
   };
 };

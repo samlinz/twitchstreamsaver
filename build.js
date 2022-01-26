@@ -6,6 +6,7 @@ const USERSCRIPT_CONFIG = `
 // @name        Video Saver
 // @namespace   samlinz
 // @match       https://www.twitch.tv/*
+// @match       https://www.youtube.com/*
 // @grant       GM_getValue
 // @grant       GM_setValue
 // @grant       GM_registerMenuCommand
