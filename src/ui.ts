@@ -1,4 +1,4 @@
-import { Services } from "./common";
+import { Logger, Services } from "./common";
 import { TimeoutId, Timeouts, UrlTool } from "./misc";
 import { VideoPageParser } from "./parse";
 import { StorageApi } from "./storage";
@@ -269,67 +269,91 @@ export const getUserInterface = ({
   };
 };
 
+export type MenuAction = {
+  title: string;
+  fnAction: () => void;
+};
+
+export const getDefaultMenuActions = ({
+  logger,
+  storage,
+  ui,
+}: {
+  logger: Logger;
+  storage: StorageApi;
+  ui: UserInterface;
+}): MenuAction[] => {
+  const values: MenuAction[] = [];
+
+  values.push({
+    title: "Dialog",
+    fnAction: () => {
+      ui.clearDebugTimeout();
+      ui.removeDialogIfPresent();
+      ui.createDialog();
+    },
+  });
+  values.push({
+    title: "Debug",
+    fnAction: () => {
+      ui.clearDebugTimeout();
+      if (ui.removeDialogIfPresent()) {
+        logger?.log("Closing debug dialog");
+        return;
+      }
+      ui.createDebug();
+    },
+  });
+  values.push({
+    title: "Dump stored values",
+    fnAction: () => {
+      const storedValues = storage.getAll();
+      storedValues.sort((a, b) => {
+        return b[1].timestamp - a[1].timestamp;
+      });
+      logger?.log(`\n${JSON.stringify(storedValues, null, 2)}`);
+    },
+  });
+  values.push({
+    title: "Nuke DB",
+    fnAction: () => {
+      storage.clear();
+      logger?.log(`Removed all entries`);
+    },
+  });
+  values.push({
+    title: "Export DB",
+    fnAction: () => {
+      const s = storage.export();
+      logger?.log({
+        export: s,
+      });
+    },
+  });
+  values.push({
+    title: "Import DB",
+    fnAction: () => {
+      const s = window.prompt("Add db dump");
+      if (!s) return;
+      const parsed = JSON.parse(s);
+      storage.import(parsed);
+      logger?.log("Imported DB");
+    },
+  });
+
+  return values;
+};
+
 export const initUserinterface = ({
   logger,
   registerMenu,
-  ui,
-  storage,
-  onStoreValue,
+  actions,
 }: Services & {
   registerMenu: typeof GM_registerMenuCommand;
-  ui: UserInterface;
-  storage: StorageApi;
-  onStoreValue?: () => void;
+  actions: MenuAction[];
 }) => {
-  if (onStoreValue) {
-    registerMenu("Store timestamp", onStoreValue);
-  }
-
-  // Register menu command that opens the dialog.
-  registerMenu("Dialog", () => {
-    ui.clearDebugTimeout();
-    ui.removeDialogIfPresent();
-    ui.createDialog();
+  actions.forEach((a) => {
+    registerMenu(a.title, a.fnAction);
   });
-
-  // Register menu command that opens the dialog.
-  registerMenu("Debug", () => {
-    ui.clearDebugTimeout();
-    if (ui.removeDialogIfPresent()) {
-      logger?.log("Closing debug dialog");
-      return;
-    }
-    // createDebug();
-    ui.createDebug();
-  });
-
-  registerMenu("Dump stored values", () => {
-    const storedValues = storage.getAll();
-    storedValues.sort((a, b) => {
-      return b[1].timestamp - a[1].timestamp;
-    });
-    logger?.log(`\n${JSON.stringify(storedValues, null, 2)}`);
-  });
-
-  registerMenu("Nuke DB", () => {
-    storage.clear();
-    logger?.log(`Removed all entries`);
-  });
-
-  registerMenu("Export DB", () => {
-    const s = storage.export();
-    logger?.log({
-      export: s,
-    });
-  });
-
-  registerMenu("Import DB", () => {
-    const s = window.prompt("Add db dump");
-    if (!s) return;
-    const parsed = JSON.parse(s);
-    storage.import(parsed);
-    logger?.log("Imported DB");
-  });
-
   logger?.log("Registered UI");
 };

@@ -20,3 +20,13 @@ export type Services = {
   logger?: Logger;
   constants: Constants;
 };
+
+export const sortByProp =
+  <T>(prop: keyof T) =>
+  (a: T, b: T) => {
+    const x1 = a[prop];
+    const x2 = b[prop];
+    if (x1 === x2) return 0;
+    if (x1 > x2) return 1;
+    return -1;
+  };

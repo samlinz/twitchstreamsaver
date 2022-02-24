@@ -1,4 +1,4 @@
-import { Services } from "./common";
+import { Services, sortByProp } from "./common";
 import { Constants, getConstants } from "./constants";
 import {
   getCache,
@@ -12,7 +12,12 @@ import {
 } from "./misc";
 import { getTwitchParser, getYoutubeParser, VideoPageParser } from "./parse";
 import { getStorage, StorageApi } from "./storage";
-import { getUserInterface, initUserinterface } from "./ui";
+import {
+  getDefaultMenuActions,
+  getUserInterface,
+  initUserinterface,
+  MenuAction,
+} from "./ui";
 
 const getInterval = ({
   logger,
@@ -243,6 +248,14 @@ const buildTwitchVariant: ProcessVariantBuilder = () => {
     }
   }
 
+  const menuActions: MenuAction[] = [
+    ...getDefaultMenuActions({
+      logger,
+      storage,
+      ui,
+    }),
+  ].sort(sortByProp("title"));
+
   return {
     init() {
       // Purge too old stored values.
@@ -254,9 +267,8 @@ const buildTwitchVariant: ProcessVariantBuilder = () => {
       initUserinterface({
         constants,
         logger,
-        storage,
         registerMenu: GM_registerMenuCommand,
-        ui,
+        actions: menuActions,
       });
     },
   };
@@ -303,22 +315,40 @@ const buildYoutubeVariant: ProcessVariantBuilder = () => {
 
   logger?.log("Initializing");
 
-  // function checkURL() {
-  //   logger?.log("Matching URL");
-  //   const currentPathName = location.pathname;
-  //   if (currentPathName.startsWith("/watch")) {
-  //     if (!currentInterval) {
-  //       logger?.log(
-  //         `Current pathname '${currentPathName}' matches Youtube video page, starting tracking`
-  //       );
-  //       currentInterval = process.start();
-  //     }
-  //   } else if (currentInterval) {
-  //     // Remove running interval.
-  //     currentInterval.cancel();
-  //     currentInterval = null;
-  //   }
-  // }
+  let interval: { cancel: () => void } | null = null;
+
+  const menuActions: MenuAction[] = [
+    ...getDefaultMenuActions({
+      logger,
+      storage,
+      ui,
+    }),
+    {
+      title: "Start interval",
+      fnAction: () => {
+        logger.log("Starting interval manually");
+        interval?.cancel();
+        interval = process.start();
+      },
+    },
+    {
+      title: "Stop interval",
+      fnAction: () => {
+        logger.log("Stopping interval manually");
+        interval?.cancel();
+      },
+    },
+    {
+      title: "Store timestamp",
+      fnAction: () => {
+        logger.log("Running interval manually");
+        const fn = process.getRunInterval({
+          skipStartOfVideo: false,
+        });
+        fn?.();
+      },
+    },
+  ].sort(sortByProp("title"));
 
   return {
     init() {
@@ -327,20 +357,11 @@ const buildYoutubeVariant: ProcessVariantBuilder = () => {
       // checkURL();
       // Check the URL again at intervals because Twitch is SPA and the script doesn't load again when navigating.
       // timeouts.setInterval(checkURL, constants.INTERVAL_MATCH_URL);
-
       initUserinterface({
         constants,
         logger,
-        storage,
         registerMenu: GM_registerMenuCommand,
-        ui,
-        onStoreValue: () => {
-          logger.log("Running interval manually");
-          const fn = process.getRunInterval({
-            skipStartOfVideo: false,
-          });
-          fn?.();
-        },
+        actions: menuActions,
       });
     },
   };
