@@ -22,7 +22,7 @@ Navigate to Youtube or Twitch VOD. Under ViolentMonkey the script should be acti
 
 - To store Youtube timestamp manually click `Store timestamp`
 - To start Youtube video tracking click `Start interval`
-- To stop Youtube video tracking click `Start interval`
+- To stop Youtube video tracking click `Stop interval`
 - Twitch VODs are tracked automatically
 - To later resume the point click `Open dialog` and choose the video URL from the list
 - First minute from video is not tracked to avoid storing useless values
