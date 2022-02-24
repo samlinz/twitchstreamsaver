@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "node ./build.js"
+    "build": "node ./build.js",
+    "watch": "npx nodemon -w ./src -e ts --exec npm run build"
   },
   "keywords": [],
   "author": "",
