@@ -36,6 +36,7 @@ export const getStorage = <TKey extends string = string>({
     storage[id] = value;
     // GM_setValue(STORAGE_KEY, storage);
     setValue(STORAGE_KEY, storage);
+    // logger?.log(`STORAGE ${STORAGE_KEY} - ${id}: ${JSON.stringify(value)}`);
   };
 
   // Delete single entry.
