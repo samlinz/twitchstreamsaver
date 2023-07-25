@@ -60,7 +60,7 @@ export const getTwitchParser = ({ logger }: Services): VideoPageParser => {
       return title[0].trim();
     }
 
-    return el.getAttribute("aria-label")?.split(" ")[0];
+    return el.getAttribute("aria-label")?.split(" ")[0] || null;
 
     // const { name, description } = ld;
     // const name1 = name.split("-")[0].trim();

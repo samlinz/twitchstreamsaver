@@ -5,23 +5,32 @@ export type UrlTool = ReturnType<typeof getTwitchUrlTool>;
 
 // Super simple cache for quasi-stable values.
 export type TempCache = typeof getCache;
-export const getCache = <T>(fnGetValue: () => T) => {
-  const EXPIRATION_TIME_MS = 5 * 60 * 1000;
-  let value: T;
-  let timestamp: number;
+export const getCache =
+  <T>({ logger }: Services) =>
+  <T>(fnGetValue: () => T) => {
+    const EXPIRATION_TIME_MS = 5 * 60 * 1000;
+    let value: T;
+    let timestamp: number;
 
-  function getEntry() {
-    if (Date.now() < timestamp + EXPIRATION_TIME_MS) {
+    function getEntry() {
+      if (Date.now() < timestamp + EXPIRATION_TIME_MS) {
+        return value;
+      }
+      const newValue = fnGetValue();
+
+      const isValid = newValue !== undefined && newValue !== null;
+      if (!isValid) {
+        logger?.warn("Will not cache nil value");
+        return value;
+      }
+
+      timestamp = Date.now();
+      value = newValue;
       return value;
     }
-    const newValue = fnGetValue();
-    timestamp = Date.now();
-    value = newValue;
-    return value;
-  }
 
-  return getEntry;
-};
+    return getEntry;
+  };
 
 // Logger.
 export const getLogger = ({ constants }: Services): Logger => {

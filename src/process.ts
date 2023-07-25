@@ -1,6 +1,6 @@
 import { Services } from "./common";
 import { Constants } from "./constants";
-import { UrlTool, TempCache, Timeouts, getCache } from "./misc";
+import { UrlTool, TempCache, Timeouts } from "./misc";
 import { StorageApi } from "./storage";
 
 export const getInterval = ({
@@ -46,8 +46,8 @@ export const getInterval = ({
     try {
       logger?.log(`Running ${i++}`);
 
-      const streamName = fnGetStreamName();
-      const streamerName = fnGetStreamerName();
+      const streamName = fnGetStreamName() || `Unknown ${id}`;
+      const streamerName = fnGetStreamerName() || "UKNOWN";
 
       if (!streamName || !streamerName) {
         return logger?.error("Could not fetch VOD information", {
@@ -129,7 +129,7 @@ export const getInterval = ({
       return newStreamName;
     });
 
-    const fnGetCachedStreamerName = getCache(() => {
+    const fnGetCachedStreamerName = cache(() => {
       const newStreamerName = parser.getChannel(rootDocument);
       logger?.log(`Got current streamer: '${newStreamerName}'`);
       return newStreamerName;

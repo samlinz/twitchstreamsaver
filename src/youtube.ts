@@ -38,17 +38,42 @@ export const getYoutubeParser = ({ logger }: Services): VideoPageParser => {
   }
 
   function getStreamer(document: Document) {
+    const fn1 = () => {
+      return (
+        document
+          .querySelector("[itemprop=author]")
+          ?.querySelector("[itemprop=name]")
+          ?.getAttribute("content") || null
+      );
+    };
+
+    const fn2 = () => {
+      const raw = document.querySelectorAll("[type='application/ld+json']")[0]
+        ?.textContent;
+      if (!raw) return null;
+      return JSON.parse(raw).author || null;
+    };
+
+    const fn3 = () => {
+      return (
+        document
+          .querySelector("ytd-video-owner-renderer")
+          ?.querySelector(".yt-formatted-string")?.textContent || null
+      );
+    };
+
+    // Try multiple ways to fetch VOD author, get first available.
     return (
-      document
-        .querySelector("[itemprop=author]")
-        ?.querySelector("[itemprop=name]")
-        ?.getAttribute("content") || null
+      [fn2, fn1, fn3]
+        .map((fn) => {
+          try {
+            return fn();
+          } catch (error) {
+            return null;
+          }
+        })
+        .find(Boolean) || null
     );
-    // return (
-    //   document
-    //     .querySelector("ytd-video-owner-renderer")
-    //     ?.querySelector(".yt-formatted-string")?.textContent || null
-    // );
   }
 
   function getStreamName(document: Document) {
@@ -73,7 +98,7 @@ export const buildYoutubeVariant: ProcessVariantBuilder = () => {
     constants,
     logger,
   };
-  const cache = getCache;
+  const cache = getCache(services);
   const document = window.document;
   const parser = getYoutubeParser(services);
   const urlTool = getYoutubeUrlTool();
