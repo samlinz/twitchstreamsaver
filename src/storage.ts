@@ -28,13 +28,12 @@ export const getStorage = <TKey extends string = string>({
   // Get all entries.
   const getAll = () => Object.entries(getStorage()) as [TKey, StorageEntry][];
 
-  // Repsert entry.
+  // Set entry.
   const set = (id: TKey, value: StorageEntry) => {
-    // const storage = GM_getValue<Storage>(STORAGE_KEY, {} as Storage);
     const storage = getStorage();
     if (!storage) throw Error("Null storage");
     storage[id] = value;
-    // GM_setValue(STORAGE_KEY, storage);
+
     setValue(STORAGE_KEY, storage);
     // logger?.log(`STORAGE ${STORAGE_KEY} - ${id}: ${JSON.stringify(value)}`);
   };

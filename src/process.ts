@@ -82,7 +82,7 @@ export const getInterval = ({
       });
 
       const storedTimeStr = time.join(":");
-      logger?.log(`Saved ${storedTimeStr} for ${id}`);
+      logger?.log(`Saved ${storedTimeStr} for ${id}; ${vodUrl}`);
 
       if (constants.DEBUG) {
         logger?.log({

@@ -4,9 +4,9 @@ import { getTwitchUrlTool } from "./twitch";
 export type UrlTool = ReturnType<typeof getTwitchUrlTool>;
 
 // Super simple cache for quasi-stable values.
-export type TempCache = typeof getCache;
+export type TempCache = ReturnType<typeof getCache>;
 export const getCache =
-  <T>({ logger }: Services) =>
+  ({ logger }: Services) =>
   <T>(fnGetValue: () => T) => {
     const EXPIRATION_TIME_MS = 5 * 60 * 1000;
     let value: T;

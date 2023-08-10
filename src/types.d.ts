@@ -9,4 +9,9 @@ type ProcessVariant = {
   init: () => void;
 };
 
-type ProcessVariantBuilder = () => ProcessVariant;
+type ProcessVariantBuilderProps = {
+  initialUrl: string;
+};
+type ProcessVariantBuilder = (
+  props: ProcessVariantBuilderProps
+) => ProcessVariant;

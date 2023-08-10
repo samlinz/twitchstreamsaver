@@ -10,11 +10,21 @@ import {
   initUserinterface,
 } from "./ui";
 
+// Parameter added to query string to specify that page was navigated from the extension and we can restart the interval.
+const STREAMSAVER_QUERY_STRING = "__ss_check";
+const STREAMSAVER_QUERY_STRING_CHECK = `${STREAMSAVER_QUERY_STRING}=1`;
+
 export const getYoutubeUrlTool = () => {
   const getTimedVodUrl = (id: string, time: number[]) => {
     const [hours, minutes, seconds] = time;
     const secondsTotal = (hours || 0) * 3600 + (minutes || 0) * 60 + seconds;
-    return `https://youtu.be/${id}?t=${secondsTotal}`;
+
+    const url = new URL("https://www.youtube.com/watch");
+    url.searchParams.set("v", id);
+    url.searchParams.set("t", secondsTotal.toString());
+    url.searchParams.set(STREAMSAVER_QUERY_STRING, 1);
+
+    return url.toString();
   };
   return {
     getTimedUrl: getTimedVodUrl,
@@ -88,7 +98,7 @@ export const getYoutubeParser = ({ logger }: Services): VideoPageParser => {
   };
 };
 
-export const buildYoutubeVariant: ProcessVariantBuilder = () => {
+export const buildYoutubeVariant: ProcessVariantBuilder = ({ initialUrl }) => {
   // let currentInterval: ReturnType<
   //   ReturnType<typeof getInterval>["start"]
   // > | null;
@@ -167,6 +177,22 @@ export const buildYoutubeVariant: ProcessVariantBuilder = () => {
     },
   ].sort(sortByProp("title"));
 
+  function checkURL() {
+    logger?.log("Matching URL", initialUrl);
+    const initialUrlParsed = new URL(initialUrl);
+    const currentSearch = initialUrlParsed.search;
+    const isUrlFromStreamSaver = currentSearch.includes(
+      STREAMSAVER_QUERY_STRING_CHECK
+    );
+    if (isUrlFromStreamSaver) {
+      logger.log(
+        "Current video was navigated from stream saver; starting interval automatically"
+      );
+      interval?.cancel();
+      interval = process.start();
+    }
+  }
+
   return {
     init() {
       // Purge too old stored values.
@@ -178,6 +204,8 @@ export const buildYoutubeVariant: ProcessVariantBuilder = () => {
         registerMenu: GM_registerMenuCommand,
         actions: menuActions,
       });
+
+      setTimeout(checkURL, 1000);
     },
   };
 };

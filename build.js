@@ -15,6 +15,7 @@ const USERSCRIPT_CONFIG = `
 // @author      samlinz
 // @description 9/21/2020, 1:20:46 PM
 // ==/UserScript==
+// Built: ${new Date().toISOString()}
 `;
 
 const outputDir = "./dist";
