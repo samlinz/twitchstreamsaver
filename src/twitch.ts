@@ -1,6 +1,6 @@
 import { Services, sortByProp } from "./common";
 import { getConstants } from "./constants";
-import { getLogger, getCache, getTimeouts } from "./misc";
+import { getLogger, getCache, getTimeouts, onlyUnique } from "./misc";
 import { getInterval } from "./process";
 import { getStorage } from "./storage";
 import {
@@ -51,16 +51,20 @@ export const getTwitchParser = ({ logger }: Services): VideoPageParser => {
     // );
     // const ld = getJsonLdInfo();
 
-    const el = document.querySelector("[aria-label~='Viewers']");
+    // const el = document.querySelector("[aria-label~='Viewers']");
+    // if (!el) {
+    //   // If the title element is not available, use document title.
+    //   const title = document.title.split("-");
+    //   if (title.length < 2) return null;
+    //   return title[0].trim();
+    // }
+    // return el.getAttribute("aria-label")?.split(" ")[0] || null;
 
-    if (!el) {
-      // If the title element is not available, use document title.
-      const title = document.title.split("-");
-      if (title.length < 2) return null;
-      return title[0].trim();
-    }
-
-    return el.getAttribute("aria-label")?.split(" ")[0] || null;
+    const rooms = Array.from(document.querySelectorAll("[data-room]")).map(
+      (x) => x.getAttribute("data-room")
+    );
+    const uniqueRooms = onlyUnique(rooms);
+    return uniqueRooms.join(",");
 
     // const { name, description } = ld;
     // const name1 = name.split("-")[0].trim();
@@ -68,23 +72,25 @@ export const getTwitchParser = ({ logger }: Services): VideoPageParser => {
   }
 
   function getStreamName(document: Document) {
+    // Just use the document title.
+    return document.title.split("-")[0].trim();
+
     // In theater or fullscreen.
-    let el = document.querySelector(
-      ".stream-info-card [data-test-selector='stream-info-card-component__subtitle']"
-    );
+    // let el = document.querySelector(
+    //   ".stream-info-card [data-test-selector='stream-info-card-component__subtitle']"
+    // );
+    // if (!el) {
+    //   // Alternatively, get it from the title card below the player.
+    //   el = document.querySelector("[data-a-target='stream-title']");
+    //   if (!el) return null;
+    //   if (!el.textContent) return null;
+    //   return el.textContent.split("•")[0];
+    // }
+    // return el.textContent;
+
     // const ld = getJsonLdInfo();
-
-    if (!el) {
-      // Alternatively, get it from the title card below the player.
-      el = document.querySelector("[data-a-target='stream-title']");
-      if (!el) return null;
-      if (!el.textContent) return null;
-      return el.textContent.split("•")[0];
-    }
-
     // const { name, description } = ld;
     // return description;
-    return el.textContent;
   }
 
   return {
@@ -105,7 +111,7 @@ export const buildTwitchVariant: ProcessVariantBuilder = () => {
     constants,
     logger,
   };
-  const cache = getCache;
+  const cache = getCache(services);
   const document = window.document;
   const parser = getTwitchParser(services);
   const urlTool = getTwitchUrlTool();

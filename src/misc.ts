@@ -18,7 +18,9 @@ export const getCache =
       }
       const newValue = fnGetValue();
 
-      const isValid = newValue !== undefined && newValue !== null;
+      const isValid =
+        newValue !== undefined && newValue !== null && newValue !== "";
+
       if (!isValid) {
         logger?.warn("Will not cache nil value");
         return value;
@@ -81,4 +83,9 @@ export const getTimeouts = ({ constants }: Services) => {
 
 export const getDocumentGetter = () => () => {
   return window.document;
+};
+
+export const onlyUnique = <T>(array: Array<T>) => {
+  const f = (value: T, index: number) => array.indexOf(value) === index;
+  return array.filter(f);
 };
